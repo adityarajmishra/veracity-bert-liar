@@ -15,7 +15,9 @@
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-22c55e)
+[![Live Demo](https://img.shields.io/badge/▶_Live_Demo-veracity--bert--liar.vercel.app-0ea5e9)](https://veracity-bert-liar.vercel.app/)
 
+**[🌐 Live Demo](https://veracity-bert-liar.vercel.app/)** ·
 **[📄 Final Report](report/Rahul_Mishra_453_P4_Final_Report.pdf)** ·
 **[📓 Notebook](notebook/Rahul_Mishra_453_P4_Notebook.ipynb)** ·
 **[🤗 Model Weights](https://huggingface.co/adityarajmishra/veracity-bert-liar)** ·
@@ -135,6 +137,8 @@ A full-stack, deployable product — not just a notebook:
 ---
 
 ## 🚀 Quick Start
+
+> 🌐 **Try it live — no setup required:** **[veracity-bert-liar.vercel.app](https://veracity-bert-liar.vercel.app/)**
 
 ### Run the full app (one command)
 
