@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer components {
+  /* Card surface — soft in light, frosted in dark */
+  .surface {
+    @apply bg-white border border-slate-200/80 shadow-soft;
+  }
+  .dark .surface {
+    @apply bg-white/[0.03] border-white/[0.08] shadow-none backdrop-blur-xl;
+  }
+
+  .surface-hover {
+    @apply transition-all duration-300 hover:border-slate-300 hover:shadow-md;
+  }
+  .dark .surface-hover:hover {
+    @apply bg-white/[0.06] border-white/[0.16];
+  }
+
+  /* Subtle gradient hairline border for hero/feature cards */
+  .ring-gradient {
+    position: relative;
+  }
+  .ring-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(14,165,233,0.5), rgba(45,212,191,0.2), transparent);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500;
+  }
+  .dark .text-gradient {
+    @apply from-sky-400 via-cyan-300 to-teal-300;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium;
+  }
+}
+
+/* Aurora float */
+@keyframes float-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(28px, -36px) scale(1.08); }
+}
+.animate-float-slow {
+  animation: float-slow 20s ease-in-out infinite;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(14,165,233,0.4); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(14,165,233,0.7); }

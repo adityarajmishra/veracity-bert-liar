@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Models & data (too large for git)
+models/*.pt
+datasets/WELFake_Dataset.csv
+
+# OS / env
+.DS_Store
+.env
+.env.local

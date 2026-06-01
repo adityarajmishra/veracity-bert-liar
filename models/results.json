@@ -1,0 +1,69 @@
+{
+  "baseline": {
+    "accuracy": 0.22681215900233828,
+    "macro_f1": 0.2182293915294947,
+    "weighted_f1": 0.22566737236474366
+  },
+  "bert_text_only": {
+    "accuracy": 0.2837100545596259,
+    "macro_f1": 0.2843214970325928,
+    "weighted_f1": 0.27978444584682877
+  },
+  "bert_metadata_fusion": {
+    "accuracy": 0.2766952455183164,
+    "macro_f1": 0.27447302450906147,
+    "weighted_f1": 0.27655355187386566
+  },
+  "roberta": {
+    "accuracy": 0.2782540919719408,
+    "macro_f1": 0.27021504352966563,
+    "weighted_f1": 0.27073877070464086
+  },
+  "welfake_bert": {
+    "accuracy": 0.988,
+    "macro_f1": 0.9879989545755986
+  },
+  "metadata_dim": 29,
+  "label_order": [
+    "pants-fire",
+    "false",
+    "barely-true",
+    "half-true",
+    "mostly-true",
+    "true"
+  ],
+  "label2id": {
+    "pants-fire": 0,
+    "false": 1,
+    "barely-true": 2,
+    "half-true": 3,
+    "mostly-true": 4,
+    "true": 5
+  },
+  "party2id": {
+    "Moderate": 0,
+    "activist": 1,
+    "business-leader": 2,
+    "columnist": 3,
+    "constitution-party": 4,
+    "county-commissioner": 5,
+    "democrat": 6,
+    "democratic-farmer-labor": 7,
+    "education-official": 8,
+    "government-body": 9,
+    "green": 10,
+    "independent": 11,
+    "journalist": 12,
+    "labor-leader": 13,
+    "liberal-party-canada": 14,
+    "libertarian": 15,
+    "newsmaker": 16,
+    "none": 17,
+    "ocean-state-tea-party-action": 18,
+    "organization": 19,
+    "republican": 20,
+    "state-official": 21,
+    "talk-show-host": 22,
+    "tea-party-member": 23
+  }
+}

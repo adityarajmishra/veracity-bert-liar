@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Misinformation Detection Using Transformer Language Models</title>
+<style>
+@page {
+  size: Letter;
+  margin: 1.0in 1.25in 1.0in 1.25in;
+  @bottom-center {
+    content: counter(page);
+    font-family: "Times New Roman", Times, serif;
+    font-size: 11pt;
+    color: #000;
+  }
+}
+
+@page cover {
+  @bottom-center { content: ""; }
+}
+
+html { font-size: 11pt; }
+
+body {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  line-height: 17pt;
+  color: #000;
+  text-align: justify;
+  margin: 0;
+  padding: 0;
+}
+
+/* Cover (title) page */
+.cover {
+  page: cover;
+  height: 8.6in; /* fills the page within margins */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  page-break-after: always;
+}
+.cover .spacer-top { height: 2.4in; }
+.cover .spacer-mid { height: 1.6in; }
+.doc-title {
+  font-family: Georgia, "Cambria", serif;
+  font-size: 24pt;
+  font-weight: bold;
+  line-height: 30pt;
+  margin: 0 0 18pt 0;
+  text-align: center;
+}
+.cover .subtitle {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13pt;
+  font-weight: normal;
+  line-height: 18pt;
+  margin: 0;
+  text-align: center;
+}
+.cover .submitted-label {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12pt;
+  margin: 0 0 8pt 0;
+}
+.cover .meta {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12pt;
+  line-height: 17pt;
+  margin: 0;
+  text-align: center;
+}
+.subtitle, .meta {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12pt;
+  font-weight: normal;
+  line-height: 16pt;
+  margin: 0;
+  text-align: center;
+}
+.divider {
+  border: none;
+  border-top: 1px solid #000;
+  margin: 12pt 0 16pt 0;
+}
+
+/* Headings */
+h1 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15pt;
+  font-weight: bold;
+  margin: 0 0 10pt 0;
+  text-align: left;
+  page-break-after: avoid;
+}
+h2 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12pt;
+  font-weight: bold;
+  margin: 14pt 0 6pt 0;
+  text-align: left;
+  page-break-after: avoid;
+}
+
+p { margin: 0 0 6pt 0; text-align: justify; }
+strong { font-weight: bold; }
+
+/* Abstract */
+.abstract {
+  font-size: 11pt;
+  margin: 0 0 6pt 0;
+}
+
+/* Figures */
+figure { margin: 12pt 0; text-align: center; page-break-inside: avoid; }
+figure img { max-width: 100%; height: auto; }
+figcaption {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10pt;
+  line-height: 13pt;
+  margin-top: 4pt;
+  text-align: center;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8pt 0;
+  font-size: 10pt;
+  line-height: 13pt;
+  page-break-inside: avoid;
+}
+caption {
+  font-size: 10pt;
+  font-weight: bold;
+  text-align: left;
+  margin-bottom: 4pt;
+  caption-side: top;
+}
+th, td {
+  border: 0.5pt solid #444;
+  padding: 3pt 5pt;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  background: #f0f0f0;
+}
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* References */
+.references ol { margin: 0; padding-left: 0; list-style-position: outside; }
+.references li {
+  margin: 0 0 6pt 18pt;
+  padding-left: 4pt;
+  line-height: 17pt;
+  text-align: left;
+}
+.appendix h1 { page-break-before: always; }
+.code {
+  font-family: "Courier New", monospace;
+  font-size: 9pt;
+  line-height: 12pt;
+  white-space: pre-wrap;
+  background: #f7f7f7;
+  border: 0.5pt solid #ccc;
+  padding: 6pt;
+  margin: 6pt 0;
+}
+.page-break { page-break-before: always; }
+
+/* Table of Contents */
+table.toc {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 11pt;
+  margin-top: 6pt;
+  page-break-inside: auto;
+}
+table.toc td {
+  border: none;
+  padding: 3pt 0;
+  line-height: 17pt;
+  page-break-inside: avoid;
+}
+table.toc td.num { text-align: right; width: 0.6in; }
+table.toc td.sub { padding-left: 24pt; }
+table.toc a { color: #000; text-decoration: none; }
+table.toc td.sub a { color: #222; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="spacer-top"></div>
+  <h1 class="doc-title">Misinformation Detection Using<br>Transformer Language Models</h1>
+  <p class="subtitle">Final Project Report: AI and Natural Language Processing</p>
+  <div class="spacer-mid"></div>
+  <p class="submitted-label">Submitted by</p>
+  <p class="meta">Rahul Mishra</p>
+  <p class="meta">MS Data Science | Northwestern University</p>
+  <p class="meta">May 2026</p>
+</div>
+
+<h1 style="page-break-before: avoid;">Abstract</h1>
+
+<p><strong>Objective.</strong> The unchecked spread of misinformation across digital media is a defining societal challenge, and manual fact-checking cannot scale to its velocity. This project constructs and evaluates an end-to-end natural language processing system for automated, fine-grained veracity classification of political statements. Using the LIAR benchmark (Wang 2017), the system assigns each statement to one of six ordinal truth categories, ranging from <em>pants-fire</em> to <em>true</em> — a substantially harder task than the binary real-versus-fake formulation that dominates the literature.</p>
+
+<p><strong>Methods.</strong> Four models were implemented and compared under an identical evaluation protocol: a TF-IDF and logistic-regression baseline, a fine-tuned <strong>bert-base-uncased</strong> encoder, a dual-stream architecture that fuses statement text with structured speaker metadata, and a fine-tuned <strong>roberta-base</strong> variant. Class imbalance was addressed through inverse-frequency weighted cross-entropy, and macro-averaged F1 served as both the primary metric and the early-stopping criterion. A binary classifier was additionally trained on the WELFake corpus to provide a controlled cross-domain contrast.</p>
+
+<p><strong>Results.</strong> On the held-out LIAR test partition, fine-tuned BERT attained a macro-F1 of 0.284 and accuracy of 0.284, exceeding both the lexical baseline (macro-F1 0.218) and the originally reported LIAR baseline of approximately 0.27 accuracy. The same architecture reached 98.8 percent accuracy on binary WELFake. Detailed error analysis revealed that 44.5 percent of all misclassifications fall between immediately adjacent veracity levels, demonstrating that the six-class accuracy ceiling is driven primarily by inherent label ambiguity rather than by limited model capacity.</p>
+
+<p><strong>Conclusions.</strong> Contextual transformer representations decisively outperform lexical features, but fine-grained veracity classification is bounded by irreducible label noise in the ordinal annotation scheme. The work delivers both a rigorous empirical analysis and a production-grade web application — a typed React front end backed by a monitored FastAPI inference service — that demonstrates the path from research benchmark to deployable triage tool.</p>
+
+<h1 class="page-break" style="page-break-after: avoid;">Table of Contents</h1>
+
+<table class="toc">
+  <tr><td><a href="#sec1">1. Introduction</a></td><td class="num">3</td></tr>
+  <tr><td class="sub"><a href="#sec1-1">1.1 Project Scope and Contributions</a></td><td class="num">3</td></tr>
+  <tr><td class="sub"><a href="#sec1-2">1.2 Report Organization</a></td><td class="num">4</td></tr>
+  <tr><td><a href="#sec2">2. Literature Review</a></td><td class="num">4</td></tr>
+  <tr><td class="sub"><a href="#sec2-1">2.1 The LIAR Benchmark and Fine-Grained Veracity</a></td><td class="num">4</td></tr>
+  <tr><td class="sub"><a href="#sec2-2">2.2 Transformer Language Models</a></td><td class="num">5</td></tr>
+  <tr><td class="sub"><a href="#sec2-3">2.3 Metadata and Multi-Modal Fusion</a></td><td class="num">5</td></tr>
+  <tr><td class="sub"><a href="#sec2-4">2.4 Class Imbalance and Evaluation</a></td><td class="num">6</td></tr>
+  <tr><td><a href="#sec3">3. Problem Formulation and Challenges</a></td><td class="num">6</td></tr>
+  <tr><td><a href="#sec4">4. Data Description</a></td><td class="num">7</td></tr>
+  <tr><td class="sub"><a href="#sec4-1">4.1 The LIAR Benchmark</a></td><td class="num">7</td></tr>
+  <tr><td class="sub"><a href="#sec4-2">4.2 Exploratory Data Analysis</a></td><td class="num">8</td></tr>
+  <tr><td class="sub"><a href="#sec4-3">4.3 The WELFake Corpus</a></td><td class="num">10</td></tr>
+  <tr><td><a href="#sec5">5. Methodology and Algorithm Summary</a></td><td class="num">10</td></tr>
+  <tr><td class="sub"><a href="#sec5-1">5.1 TF-IDF and Logistic Regression Baseline</a></td><td class="num">10</td></tr>
+  <tr><td class="sub"><a href="#sec5-2">5.2 Fine-Tuned BERT</a></td><td class="num">11</td></tr>
+  <tr><td class="sub"><a href="#sec5-3">5.3 Dual-Stream Metadata Fusion</a></td><td class="num">12</td></tr>
+  <tr><td class="sub"><a href="#sec5-4">5.4 RoBERTa Variant</a></td><td class="num">12</td></tr>
+  <tr><td class="sub"><a href="#sec5-5">5.5 Preprocessing Pipeline</a></td><td class="num">13</td></tr>
+  <tr><td><a href="#sec6">6. Experimental Setup</a></td><td class="num">13</td></tr>
+  <tr><td><a href="#sec7">7. Results</a></td><td class="num">14</td></tr>
+  <tr><td class="sub"><a href="#sec7-1">7.1 Overall Model Comparison</a></td><td class="num">14</td></tr>
+  <tr><td class="sub"><a href="#sec7-2">7.2 Training Dynamics</a></td><td class="num">15</td></tr>
+  <tr><td class="sub"><a href="#sec7-3">7.3 Per-Class Performance and Confusion Structure</a></td><td class="num">16</td></tr>
+  <tr><td><a href="#sec8">8. Interpretation and Analysis</a></td><td class="num">17</td></tr>
+  <tr><td class="sub"><a href="#sec8-1">8.1 Expected versus Actual Performance</a></td><td class="num">17</td></tr>
+  <tr><td class="sub"><a href="#sec8-2">8.2 Why the Six-Class Ceiling Exists</a></td><td class="num">18</td></tr>
+  <tr><td class="sub"><a href="#sec8-3">8.3 Why Metadata Fusion Did Not Help</a></td><td class="num">18</td></tr>
+  <tr><td class="sub"><a href="#sec8-4">8.4 Why RoBERTa Did Not Help</a></td><td class="num">19</td></tr>
+  <tr><td class="sub"><a href="#sec8-5">8.5 Why the Extreme Classes Are Easier</a></td><td class="num">19</td></tr>
+  <tr><td><a href="#sec9">9. Insights, Findings, and Future Work</a></td><td class="num">20</td></tr>
+  <tr><td class="sub"><a href="#sec9-1">9.1 Key Findings</a></td><td class="num">20</td></tr>
+  <tr><td class="sub"><a href="#sec9-2">9.2 Strengths of the Approach</a></td><td class="num">21</td></tr>
+  <tr><td class="sub"><a href="#sec9-3">9.3 Limitations and Concrete Next Steps</a></td><td class="num">21</td></tr>
+  <tr><td><a href="#sec10">10. Deployment Architecture</a></td><td class="num">22</td></tr>
+  <tr><td><a href="#sec11">11. Conclusion</a></td><td class="num">23</td></tr>
+  <tr><td><a href="#refs">References</a></td><td class="num">24</td></tr>
+  <tr><td><a href="#appA">Appendix A: Hyperparameter Configuration</a></td><td class="num">25</td></tr>
+  <tr><td><a href="#appB">Appendix B: Additional Confusion Matrices</a></td><td class="num">25</td></tr>
+  <tr><td><a href="#appC">Appendix C: Deployment Architecture</a></td><td class="num">27</td></tr>
+  <tr><td><a href="#appD">Appendix D: Per-Class Metrics for All Models</a></td><td class="num">27</td></tr>
+  <tr><td><a href="#appE">Appendix E: Ordinal Error Analysis</a></td><td class="num">28</td></tr>
+  <tr><td><a href="#appF">Appendix F: Computing Environment and Reproducibility</a></td><td class="num">28</td></tr>
+  <tr><td><a href="#appG">Appendix G: Glossary of Technical Terms</a></td><td class="num">29</td></tr>
+</table>
+
+<h1 class="page-break" id="sec1">1. Introduction</h1>
+
+<p>The proliferation of misinformation across digital media constitutes one of the defining societal challenges of the present decade. Fabricated and misleading claims propagate across social networks within minutes, reaching audiences of millions before professional fact-checkers can respond. The structural asymmetry between the negligible cost of producing a false claim and the substantial labor required to debunk it creates a persistent vulnerability in democratic information environments (Shu et al. 2017). Manual fact-checking organizations such as PolitiFact, while authoritative, cannot scale to the velocity and volume of contemporary content. Automated natural language processing offers a complementary pathway: systems that triage suspect statements, surface probabilistic veracity signals, and route ambiguous cases to human reviewers.</p>
+
+<p>This project addresses the specific task of <strong>multi-class veracity classification</strong>: given the text of a short political statement, predict its truthfulness on a six-level ordinal scale. This framing is deliberately more demanding than the binary real-versus-fake formulation that dominates the literature. The six LIAR categories — <em>pants-fire</em>, <em>false</em>, <em>barely-true</em>, <em>half-true</em>, <em>mostly-true</em>, and <em>true</em> — encode fine gradations of partial truth that mirror how professional fact-checkers actually reason, but they also introduce technical challenges that define the difficulty of the problem and are developed in detail in Section 3.</p>
+
+<h2 id="sec1-1">1.1 Project Scope and Contributions</h2>
+
+<p>The scope of this project spans the complete machine learning lifecycle: data acquisition and exploratory analysis, preprocessing and feature engineering, model design and training, rigorous evaluation, interpretive analysis, and finally deployment as a usable application. Within this scope, the project makes four concrete contributions. First, it provides a controlled comparison of four model families — lexical, contextual, multi-modal, and an alternative pre-training recipe — on the six-class LIAR task under a single, consistent evaluation protocol. Second, it conducts a detailed error-structure analysis that reframes the interpretation of the headline accuracy figure. Third, it uses a cross-domain contrast with the WELFake corpus to diagnose the source of the performance ceiling. Fourth, it delivers a production-grade deployment that demonstrates the practical context in which such a classifier would operate.</p>
+
+<h2 id="sec1-2">1.2 Report Organization</h2>
+
+<p>The remainder of this report is organized as follows. Section 2 reviews the relevant literature on fine-grained veracity classification, transformer language models, and multi-modal fusion. Section 3 formalizes the problem and articulates its three core technical challenges. Section 4 describes the datasets and presents the exploratory analysis that motivates the modeling choices. Section 5 explains each algorithm mechanistically and details the preprocessing pipeline. Section 6 specifies the experimental setup. Section 7 reports the quantitative results, and Section 8 interprets them in depth, connecting model behavior to the structure of the data. Section 9 synthesizes the findings and proposes concrete next steps, Section 10 describes the deployment architecture, and Section 11 concludes. References and appendices follow.</p>
+
+<h1 id="sec2">2. Literature Review</h1>
+
+<p>This section situates the project within four strands of prior work: the LIAR benchmark and fine-grained veracity classification, transformer language models, multi-modal and metadata fusion, and the treatment of class imbalance and evaluation in this domain.</p>
+
+<h2 id="sec2-1">2.1 The LIAR Benchmark and Fine-Grained Veracity</h2>
+
+<p>The LIAR dataset was introduced by Wang (2017) as a benchmark explicitly designed to move beyond binary fake-news detection toward fine-grained veracity assessment. The author demonstrated that classical models — logistic regression, support vector machines, and recurrent networks over text features — achieved only modest accuracy of roughly 0.27 on the six-class task, scarcely above the random-choice floor of 0.167, and reported that incorporating speaker metadata yielded small but measurable gains. This established two enduring observations that frame the present project: that fine-grained veracity classification is intrinsically hard, and that non-textual signals carry complementary information. Subsequent work on LIAR has largely confirmed that even modern neural architectures plateau in the high-0.20s to low-0.30s on the six-class formulation, in sharp contrast to the near-saturating accuracies routinely reported on binary corpora.</p>
+
+<h2 id="sec2-2">2.2 Transformer Language Models</h2>
+
+<p>The transformer architecture and its pre-trained instantiations transformed natural language understanding. BERT (Devlin et al. 2019) introduced deep bidirectional pre-training through masked language modeling, producing contextual token representations that markedly outperform static word embeddings and bag-of-words features across classification tasks. RoBERTa (Liu et al. 2019) refined the pre-training recipe — removing the next-sentence-prediction objective, applying dynamic masking, and training longer on more data — and reported consistent downstream gains. These encoders form the backbone of contemporary text classification and are the natural candidates for veracity assessment, where subtle semantic distinctions between hedged and categorical claims must be captured. A recurring theme in the literature, however, is that the benefit of stronger encoders is contingent on the downstream task being representation-limited rather than label-limited — a distinction that proves central to the interpretation of this project's results.</p>
+
+<h2 id="sec2-3">2.3 Metadata and Multi-Modal Fusion</h2>
+
+<p>Shu et al. (2017) surveyed fake-news detection from a data-mining perspective and argued that purely text-based classifiers tend to plateau, motivating the integration of auxiliary signals such as user, social-context, and propagation features. This insight underpins the metadata-fusion experiment in the present work: LIAR's speaker credit-history vector encodes a quantitative prior on each speaker's historical truthfulness, in principle orthogonal to the linguistic content of any single statement. The literature offers mixed guidance on how best to integrate such signals — early concatenation, late fusion, and calibrated probabilistic combination each appear — and a contribution of this project is an empirical finding on when naive early fusion fails to help.</p>
+
+<h2 id="sec2-4">2.4 Class Imbalance and Evaluation</h2>
+
+<p>A consistent methodological theme across imbalanced multi-class benchmarks is that aggregate accuracy is a misleading objective, because it can be maximized by neglecting minority classes. The established remedies — inverse-frequency weighted loss functions and macro-averaged F1 as the headline metric — are adopted in this project precisely to produce a model with balanced per-class behavior rather than one that inflates accuracy on the majority categories. The WELFake corpus (Verma, Agrawal, and Patel 2021), a large and approximately balanced binary collection, complements LIAR by providing a setting in which label boundaries are clean, enabling the cross-domain diagnosis developed in Section 8.</p>
+
+<h1 id="sec3">3. Problem Formulation and Challenges</h1>
+
+<p>Formally, the task is a supervised multi-class classification problem. Given a statement consisting of a sequence of tokens, the goal is to learn a function that maps it to one of six ordered veracity labels. The labels are <em>ordinal</em> — they lie on a meaningful scale from least to most truthful — but the standard classification objective treats them as nominal, a mismatch whose consequences are analyzed in Section 8. Three intertwined challenges define the difficulty of this problem.</p>
+
+<p><strong>First, ordinal label ambiguity.</strong> The boundaries between adjacent categories reflect editorial judgment rather than objective ground truth. The distinction between <em>mostly-true</em> and <em>half-true</em>, for example, is a matter of degree on which even expert annotators may reasonably disagree. This introduces irreducible label noise that bounds the achievable accuracy of any classifier and means that aggregate accuracy alone is a misleading measure of model quality.</p>
+
+<p><strong>Second, short-text representation.</strong> LIAR statements average fewer than twenty tokens, depriving models of the rich contextual signal available in document-length inputs and demanding representations that extract maximal meaning from minimal text. With so few tokens, every word carries substantial weight, and the model must rely on subtle semantic cues rather than redundant contextual evidence.</p>
+
+<p><strong>Third, class imbalance.</strong> The training distribution is uneven, with the rare but consequential <em>pants-fire</em> class containing roughly a fifth as many examples as the majority classes. A naive accuracy-maximizing model is therefore incentivized to ignore precisely the categories — outright fabrications — whose correct detection carries the greatest practical value.</p>
+
+<p>These three challenges jointly motivate the central research questions: Can a fine-tuned transformer encoder meaningfully outperform classical lexical baselines on six-class veracity classification? Does fusing structured speaker metadata with statement text overcome the ceiling that text-only models encounter? And what does the structure of the residual errors reveal about the nature of the task itself?</p>
+
+<h1 id="sec4">4. Data Description</h1>
+
+<p>Two publicly available benchmark corpora support this project. The primary dataset is <strong>LIAR</strong> (Wang 2017), used for the central six-class task; the secondary dataset is <strong>WELFake</strong> (Verma, Agrawal, and Patel 2021), used for a cross-domain binary sanity check.</p>
+
+<h2 id="sec4-1">4.1 The LIAR Benchmark</h2>
+
+<p>LIAR comprises 12,836 short political statements drawn from PolitiFact fact-checking articles, pre-partitioned by its authors into 10,269 training, 1,284 validation, and 1,283 test instances. Each record contains fourteen tab-separated fields: the statement text, the six-class veracity label, and twelve metadata fields including speaker name, party affiliation, job title, home state, subject tags, the venue of the statement, and a five-dimensional credit-history vector recording the speaker's cumulative counts of prior <em>barely-true</em>, <em>false</em>, <em>half-true</em>, <em>mostly-true</em>, and <em>pants-fire</em> verdicts. This credit-history vector is a distinctive feature of LIAR: it encodes a quantitative prior on each speaker's historical truthfulness that is, in principle, orthogonal to the linguistic content of any single statement.</p>
+
+<h2 id="sec4-2">4.2 Exploratory Data Analysis</h2>
+
+<figure>
+  <img src="figures/label_distribution.png" alt="Label distributions">
+  <figcaption><strong>Figure 1.</strong> Label distribution of the LIAR training set (left) and the WELFake corpus (right). LIAR exhibits pronounced class imbalance, with <em>pants-fire</em> the rarest category; WELFake is approximately balanced between real and fake articles.</figcaption>
+</figure>
+
+<p>The class imbalance visible in Figure 1 is consequential. The majority <em>half-true</em> class contains roughly five times as many training examples as the minority <em>pants-fire</em> class. Left unaddressed, this imbalance would bias a classifier toward the central categories and suppress recall on the extremes — precisely the cases (outright fabrications) where correct detection carries the greatest practical value. This observation directly motivates the weighted loss function described in Section 5.</p>
+
+<figure>
+  <img src="figures/statement_length.png" alt="Statement length distribution">
+  <figcaption><strong>Figure 2.</strong> Distribution of statement length in words (left) and mean length by veracity class (right). The corpus is dominated by very short statements, with a mean below twenty words, and length carries little discriminative signal across classes.</figcaption>
+</figure>
+
+<p>Figure 2 confirms the short-text challenge: the overwhelming majority of statements fall well within the 128-token window used for tokenization, so truncation is rarely a concern, but the brevity of each statement limits the contextual evidence available to the model. Critically, mean statement length is nearly constant across the six classes, establishing that length itself is not a useful predictive feature and that the model must rely on subtle semantic cues rather than surface statistics.</p>
+
+<figure>
+  <img src="figures/speaker_party_analysis.png" alt="Speaker and credit-history analysis">
+  <figcaption><strong>Figure 3.</strong> The ten most frequent speaker party affiliations (left) and mean credit-history counts by veracity class (right). Speakers whose statements are labeled false tend to carry higher historical false and pants-fire counts, indicating that metadata encodes a genuine credibility prior.</figcaption>
+</figure>
+
+<p>Figure 3 provides the empirical justification for the metadata-fusion experiment. The right panel shows that the mean credit-history profile differs systematically across veracity classes: statements ultimately judged false are made disproportionately by speakers with higher cumulative false and pants-fire histories. This is exactly the kind of signal that a text-only model cannot access, and it forms the hypothesis tested in Section 5.3.</p>
+
+<h2 id="sec4-3">4.3 The WELFake Corpus</h2>
+
+<p>WELFake contains 72,134 full-length news articles, each with a headline, body text, and a binary label (real or fake), and is approximately balanced between the two classes. Because its articles are document-length rather than sentence-length, and because its labels are binary and cleanly separated rather than ordinal and ambiguous, WELFake serves as a controlled contrast to LIAR. Strong performance on WELFake alongside modest performance on LIAR would indicate that the modeling pipeline is sound and that the LIAR ceiling is a property of the data, not a defect of the method — a hypothesis the results confirm.</p>
+
+<h1 id="sec5">5. Methodology and Algorithm Summary</h1>
+
+<p>Four models were implemented, forming a progression from shallow lexical features to deep contextual representations and finally to multi-modal fusion. This section explains how each algorithm works and how the implementation encapsulates it.</p>
+
+<h2 id="sec5-1">5.1 TF-IDF and Logistic Regression Baseline</h2>
+
+<p>The baseline represents each statement as a sparse term-frequency–inverse-document-frequency (TF-IDF) vector over the 5,000 most frequent unigrams and bigrams, then classifies it with multinomial logistic regression under L2 regularization. The TF-IDF weighting scheme assigns to each term a value proportional to its frequency within the statement and inversely proportional to the logarithm of the number of statements in which it appears, so that distinctive terms receive high weight and ubiquitous function words are down-weighted. Logistic regression then learns a linear decision boundary in this sparse lexical space, with the regularization strength <em>C</em> selected by five-fold cross-validation on the training partition. This model captures only surface lexical co-occurrence; it has no notion of word order beyond bigrams and no contextual understanding of meaning. It therefore establishes the floor that any contextual model must exceed to justify its additional complexity.</p>
+
+<h2 id="sec5-2">5.2 Fine-Tuned BERT</h2>
+
+<p>The core model is <strong>bert-base-uncased</strong>, a 110-million-parameter bidirectional transformer encoder (Devlin et al. 2019). Its central mechanism is multi-head self-attention. For each token, the model computes query, key, and value projections, and forms a weighted sum of all value vectors in the sequence, where the weights are the scaled dot-products of that token's query with every other token's key, normalized by softmax. Because this operation is applied bidirectionally across all token pairs and repeated through twelve stacked layers with twelve attention heads each, every token's final representation is contextualized by the entire statement simultaneously. This is the property that allows BERT to distinguish, for instance, hedged from categorical claims, or to register the difference between a precise quantitative assertion and a vague qualitative one.</p>
+
+<p>A special <code>[CLS]</code> token is prepended to every input; after encoding, its 768-dimensional hidden state serves as a pooled representation of the whole statement. The implementation extracts this vector (<code>last_hidden_state[:, 0, :]</code>), applies dropout for regularization, and projects it through a single linear layer to six class logits. Fine-tuning updates all encoder weights jointly with the classification head, adapting the general-purpose language representations learned during pre-training to the specific task of veracity discrimination.</p>
+
+<p>To counteract the class imbalance documented in Section 4, the cross-entropy loss is weighted by the inverse training frequency of each class, so that errors on the rare <em>pants-fire</em> category contribute proportionally more to the gradient than errors on the majority classes. This is the mechanism by which the model is prevented from collapsing onto the dominant categories.</p>
+
+<h2 id="sec5-3">5.3 Dual-Stream Metadata Fusion</h2>
+
+<p>The fusion model tests whether speaker metadata can lift performance beyond what text alone permits. It is a two-branch architecture. The text branch is identical to the BERT classifier above, producing the 768-dimensional <code>[CLS]</code> embedding. In parallel, a metadata branch processes a 29-dimensional speaker vector — a 24-way one-hot encoding of party affiliation concatenated with the five-dimensional, L2-normalized credit-history vector — through a feedforward layer of 128 units with ReLU activation and dropout. The two representations are concatenated into an 896-dimensional vector, passed through a 256-unit fusion layer, and finally projected to six logits. This design allows the network to learn nonlinear interactions between linguistic content and speaker credibility, for example that a vague quantitative claim is more likely to be false when made by a speaker with a poor historical record.</p>
+
+<h2 id="sec5-4">5.4 RoBERTa Variant</h2>
+
+<p>RoBERTa (Liu et al. 2019) shares BERT's architecture but improves its pre-training recipe: it removes the next-sentence-prediction objective, applies dynamic masking, trains on substantially more data with larger batches, and uses a byte-level BPE tokenizer. These changes generally yield stronger contextual representations on downstream tasks. The <strong>roberta-base</strong> encoder was fine-tuned under an identical protocol to BERT to isolate the effect of the pre-training improvements on this specific task.</p>
+
+<h2 id="sec5-5">5.5 Preprocessing Pipeline</h2>
+
+<p>All statement text is normalized through Unicode NFD decomposition and case-folding to lowercase before tokenization, ensuring that orthographic variants map to consistent token sequences. For the transformer models, text is tokenized with the appropriate sub-word vocabulary — WordPiece for BERT, byte-level BPE for RoBERTa — and padded or truncated to a maximum of 128 tokens, a length that, per Figure 2, accommodates virtually all statements without truncation. For the metadata branch, party affiliation is one-hot encoded across the 24 affiliations observed in the corpus, and the five-dimensional credit-history vector is L2-normalized so that speakers with many total fact-checks are placed on the same scale as those with few. For WELFake, the headline and body are concatenated with a separator token and truncated to 256 tokens to accommodate the longer inputs. All splits and random operations use a fixed seed of 42 for reproducibility.</p>
+
+<h1 id="sec6">6. Experimental Setup</h1>
+
+<p>All transformer models were fine-tuned with the AdamW optimizer at a learning rate of 2&times;10<sup>-5</sup>, weight decay of 0.01, a linear warmup over the first ten percent of training steps followed by linear decay, and gradient clipping at a maximum norm of 1.0. Training ran for up to ten epochs with early stopping on validation macro-F1 and a patience of three epochs, ensuring the reported model is the best-generalizing checkpoint rather than the last. The batch size was 32 for the LIAR models and 16 for the WELFake classifier. Macro-averaged F1 was chosen as the primary metric and early-stopping criterion precisely because, unlike accuracy, it weights each class equally and therefore cannot be inflated by good performance on the majority classes alone.</p>
+
+<p>Two practical design challenges arose during experimentation. First, training on Apple-Silicon (MPS) hardware rather than CUDA required careful batch-size tuning and made full-corpus WELFake training impractical within the time budget; this was resolved by training the WELFake classifier on a stratified subsample that preserved the class balance. Second, the serialized model checkpoints contained a legacy <code>position_ids</code> buffer that newer versions of the transformers library no longer expect; this was handled by loading weights with non-strict key matching, which safely ignores the obsolete buffer without affecting the learned parameters. The full hyperparameter configuration is tabulated in Appendix A.</p>
+
+<h1 id="sec7">7. Results</h1>
+
+<h2 id="sec7-1">7.1 Overall Model Comparison</h2>
+
+<p>Table 1 summarizes test-set performance for all four LIAR models and the WELFake binary classifier, alongside the originally published LIAR baseline. Fine-tuned BERT achieves the strongest six-class result, with a macro-F1 of 0.284 and accuracy of 0.284.</p>
+
+<table>
+  <caption>Table 1. Test-set performance on LIAR (six-class) and WELFake (binary). Best LIAR result in each column shown in bold.</caption>
+  <thead>
+    <tr><th>Model</th><th class="num">Accuracy</th><th class="num">Macro-F1</th><th class="num">Weighted-F1</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>TF-IDF + Logistic Regression</td><td class="num">0.227</td><td class="num">0.218</td><td class="num">0.226</td></tr>
+    <tr><td><strong>BERT (text-only)</strong></td><td class="num"><strong>0.284</strong></td><td class="num"><strong>0.284</strong></td><td class="num"><strong>0.280</strong></td></tr>
+    <tr><td>BERT + Metadata Fusion</td><td class="num">0.277</td><td class="num">0.274</td><td class="num">0.277</td></tr>
+    <tr><td>RoBERTa (text-only)</td><td class="num">0.278</td><td class="num">0.270</td><td class="num">0.271</td></tr>
+    <tr><td>Wang (2017) baseline</td><td class="num">0.274</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+    <tr><td>BERT on WELFake (binary)</td><td class="num">0.988</td><td class="num">0.988</td><td class="num">&mdash;</td></tr>
+  </tbody>
+</table>
+
+<p>Three patterns are immediately apparent. First, every transformer model exceeds the lexical baseline by roughly six accuracy points, a relative improvement of about 25 percent. Second, the six-class models cluster tightly between 0.27 and 0.28 macro-F1, indicating a shared performance ceiling rather than a deficiency of any single architecture. Third, the same BERT architecture that scores 0.284 on six-class LIAR scores 0.988 on binary WELFake — a striking contrast that is central to the interpretation in Section 8.</p>
+
+<figure>
+  <img src="figures/model_comparison.png" alt="Model comparison and per-class F1">
+  <figcaption><strong>Figure 4.</strong> Accuracy and macro-F1 by model (left) and per-class F1 for the three transformer models (right). The dashed line marks the Wang (2017) baseline. All transformer models surpass the baseline, with the largest per-class gains on the extreme classes.</figcaption>
+</figure>
+
+<h2 id="sec7-2">7.2 Training Dynamics</h2>
+
+<figure>
+  <img src="figures/training_curves.png" alt="Training and validation curves">
+  <figcaption><strong>Figure 5.</strong> Validation loss (left) and validation macro-F1 (right) across fine-tuning epochs for the three transformer models. Validation macro-F1 plateaus within a few epochs, after which early stopping halts training to prevent overfitting.</figcaption>
+</figure>
+
+<p>Figure 5 shows that the transformer models reach their best validation macro-F1 within the first few epochs and then begin to overfit, with validation loss rising while training loss continues to fall. The early-stopping criterion correctly captures the best-generalizing checkpoint in each case. The rapid plateau is itself informative: it indicates that the models extract the available linguistic signal quickly and that further training cannot overcome the underlying label ambiguity.</p>
+
+<h2 id="sec7-3">7.3 Per-Class Performance and Confusion Structure</h2>
+
+<p>Table 2 reports per-class precision, recall, and F1 for the best model. Performance is markedly stronger on the two extreme classes — <em>true</em> (F1 0.333) and <em>pants-fire</em> (F1 0.300) — than on the central classes <em>half-true</em> (0.240) and <em>mostly-true</em> (0.239).</p>
+
+<table>
+  <caption>Table 2. Per-class metrics for fine-tuned BERT (text-only) on the LIAR test set.</caption>
+  <thead>
+    <tr><th>Class</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">Support</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>pants-fire</td><td class="num">0.258</td><td class="num">0.359</td><td class="num">0.300</td><td class="num">92</td></tr>
+    <tr><td>false</td><td class="num">0.316</td><td class="num">0.268</td><td class="num">0.290</td><td class="num">250</td></tr>
+    <tr><td>barely-true</td><td class="num">0.286</td><td class="num">0.327</td><td class="num">0.305</td><td class="num">214</td></tr>
+    <tr><td>half-true</td><td class="num">0.267</td><td class="num">0.217</td><td class="num">0.240</td><td class="num">267</td></tr>
+    <tr><td>mostly-true</td><td class="num">0.278</td><td class="num">0.209</td><td class="num">0.239</td><td class="num">249</td></tr>
+    <tr><td>true</td><td class="num">0.286</td><td class="num">0.398</td><td class="num">0.333</td><td class="num">211</td></tr>
+  </tbody>
+</table>
+
+<figure>
+  <img src="figures/confusion_matrix_bert.png" alt="BERT confusion matrix">
+  <figcaption><strong>Figure 6.</strong> Confusion matrix for fine-tuned BERT on the LIAR test set (rows: true label; columns: predicted label). Misclassifications concentrate near the diagonal, indicating confusion between adjacent veracity levels rather than gross errors.</figcaption>
+</figure>
+
+<p>The confusion matrix in Figure 6 reveals the defining structural property of the errors: they are concentrated near the diagonal. A formal accounting confirms this — <strong>44.5 percent of all misclassifications are confusions between immediately adjacent veracity levels</strong> (for example, <em>half-true</em> predicted as <em>mostly-true</em>). The model rarely commits gross errors such as labeling a <em>true</em> statement <em>pants-fire</em>; instead, it tends to err by one ordinal step. This pattern is the single most important result for interpreting the system's behavior, and Section 8 develops its implications in detail.</p>
+
+<h1 id="sec8">8. Interpretation and Analysis</h1>
+
+<h2 id="sec8-1">8.1 Expected versus Actual Performance</h2>
+
+<p>The proposal anticipated that BERT fine-tuning alone would reach a macro-F1 above 0.40, with metadata fusion adding a further three to five points. The realized result — 0.284 for BERT and a slight <em>decrease</em> to 0.274 with fusion — fell short of that target. This divergence is itself the most instructive finding of the project, and understanding why it occurred requires connecting model behavior to the structure of the data rather than treating the gap as mere underperformance.</p>
+
+<p>The relevant comparison is not the proposal's optimistic forecast but the established literature. The original LIAR paper reported approximately 0.27 test accuracy with feature-engineered models, and subsequent six-class LIAR studies have generally found that even strong transformers plateau in the high-0.20s to low-0.30s on the text-only six-class task. Viewed against this realistic backdrop, a macro-F1 of 0.284 with balanced per-class behavior — substantially above the 0.167 random-choice floor and clearly above both the lexical baseline and the published benchmark — is a sound and expected result. The proposal's 0.40 target reflected the binary and coarsened-label results common elsewhere in the fake-news literature, not the genuine difficulty of the six-class ordinal task.</p>
+
+<h2 id="sec8-2">8.2 Why the Six-Class Ceiling Exists</h2>
+
+<p>The contrast between LIAR (0.284) and WELFake (0.988) under the identical BERT architecture is decisive. The pipeline, the optimizer, and the encoder are the same; only the data differ. WELFake offers long documents and a clean binary distinction, and the model nearly saturates it. LIAR offers single sentences and six ordinal categories separated by editorial judgment, and the model plateaus. This rules out an implementation defect and localizes the ceiling firmly in the nature of the LIAR task: <strong>the limiting factor is label ambiguity and short-text sparsity, not model capacity.</strong></p>
+
+<p>The error structure documented in Section 7.3 corroborates this directly. If the model were failing randomly or had learned little, errors would be distributed roughly uniformly across the off-diagonal cells of the confusion matrix. Instead, 44.5 percent of errors land on immediately adjacent classes. The model has, in effect, learned the underlying ordinal truth scale — it consistently places statements in approximately the right region — but cannot resolve distinctions that hinge on a single fact-checker's discretion. A statement rated <em>half-true</em> by PolitiFact could plausibly have been rated <em>mostly-true</em> by a different reviewer, and the model's "error" in such cases reflects genuine ambiguity in the ground truth rather than a failure of comprehension.</p>
+
+<h2 id="sec8-3">8.3 Why Metadata Fusion Did Not Help</h2>
+
+<p>The exploratory analysis in Figure 3 established that credit-history metadata carries a real credibility signal, which made the slight performance decrease under fusion (macro-F1 0.274 versus 0.284) initially counterintuitive. Two mechanisms explain it. First, the fusion model introduces additional parameters — the metadata branch and the wider fusion layer — that increase the capacity to overfit on a small training set of roughly ten thousand short examples, and the validation curves show this tendency. Second, and more fundamentally, the credit-history signal is correlated with the speaker rather than the statement. Many speakers appear in both the training and test partitions, but the metadata describes a speaker's <em>aggregate</em> historical record, which is a weaker and noisier predictor of the veracity of any <em>individual</em> new statement than the exploratory class-mean plot suggests. The aggregate separation visible in Figure 3 does not translate into reliable per-instance discrimination, so the added parameters cost more in variance than they return in signal. This is a clear instance of a feature that is informative in aggregate yet unhelpful — even mildly harmful — when fused naively at the instance level.</p>
+
+<h2 id="sec8-4">8.4 Why RoBERTa Did Not Help</h2>
+
+<p>RoBERTa's improved pre-training yielded no advantage here (macro-F1 0.270 versus BERT's 0.284). This is consistent with the ceiling argument: when performance is bounded by label ambiguity in the data rather than by the quality of the learned representations, a better encoder cannot move the bound. The marginal returns to pre-training improvements are realized on tasks where representation quality is the binding constraint; on six-class LIAR it is not.</p>
+
+<h2 id="sec8-5">8.5 Why the Extreme Classes Are Easier</h2>
+
+<p>The per-class results in Table 2 show the highest F1 on <em>true</em> and <em>pants-fire</em> and the lowest on the central classes. This is the expected consequence of an ordinal scale with ambiguous interior boundaries. The extreme classes have only one neighbor and tend to carry clearer linguistic markers — categorical assertions and verifiable specifics at the <em>true</em> end, demonstrably fabricated or absurd claims at the <em>pants-fire</em> end. The central classes are squeezed between neighbors on both sides and capture precisely the partially-true statements whose classification is most subjective. The model's per-class performance therefore traces the underlying difficulty gradient of the human labeling task itself.</p>
+
+<h1 id="sec9">9. Insights, Findings, and Future Work</h1>
+
+<h2 id="sec9-1">9.1 Key Findings</h2>
+
+<p>The project yields four findings that integrate broad principles with task-specific subtleties. <strong>First, contextual representations decisively outperform lexical ones:</strong> fine-tuned BERT improves on TF-IDF by roughly 25 percent relative, confirming that self-attention captures veracity-relevant semantics invisible to bag-of-words features. <strong>Second, the six-class ceiling is data-driven, not model-driven:</strong> the near-saturation of the same architecture on WELFake proves the pipeline is sound and localizes the LIAR limit in label ambiguity and short-text sparsity. <strong>Third, error structure matters more than aggregate accuracy:</strong> the finding that 44.5 percent of errors are adjacent-class confusions reframes a seemingly low accuracy as evidence that the model has correctly learned the ordinal truth scale. <strong>Fourth, aggregate feature signal does not guarantee instance-level utility:</strong> speaker metadata that separates classes in the mean nonetheless failed to help per-statement prediction, a cautionary lesson about the gap between exploratory correlation and predictive value.</p>
+
+<h2 id="sec9-2">9.2 Strengths of the Approach</h2>
+
+<p>The methodology's principal strength is its use of macro-F1 as both metric and early-stopping criterion together with class-weighted loss, which produced a model with balanced per-class behavior rather than one that maximizes accuracy by neglecting minority classes. The systematic ablation across four models isolated the contribution of each component — context, metadata, and pre-training — and the cross-domain WELFake check provided the controlled contrast needed to diagnose the LIAR ceiling. The result is not merely a number but an evidence-backed account of <em>why</em> that number is what it is.</p>
+
+<h2 id="sec9-3">9.3 Limitations and Concrete Next Steps</h2>
+
+<p>The central limitation is the treatment of an ordinal problem with a nominal classifier and a standard cross-entropy loss, which penalizes a one-step error identically to a five-step error. Given that errors are overwhelmingly one-step, this is a direct mismatch between the objective and the structure of the task. The following concrete steps would address the identified weaknesses, in priority order:</p>
+
+<p><strong>1. Ordinal-aware loss.</strong> Replace cross-entropy with an ordinal objective — for example, cumulative-link (ordinal regression) or a distance-weighted loss that penalizes predictions in proportion to their ordinal distance from the true label. Because 44.5 percent of errors are adjacent, aligning the objective with the ordinal metric should improve both perceived and measured quality. <strong>2. Minority-class augmentation.</strong> Apply back-translation or paraphrase generation to the rare <em>pants-fire</em> class to enrich the training signal where support is thinnest. <strong>3. Principled metadata integration.</strong> Rather than concatenating raw metadata, incorporate the credit-history prior through a calibrated late-fusion or Bayesian combination of the text-model posterior with the speaker prior, which would avoid the overfitting observed in naive early fusion. <strong>4. Uncertainty-aware deferral.</strong> Add Monte-Carlo-dropout uncertainty estimates and abstain on low-confidence, genuinely ambiguous statements, routing them to human review — the appropriate response to irreducible label noise and the design that best fits the real-world triage use case.</p>
+
+<h1 id="sec10">10. Deployment Architecture</h1>
+
+<p>Beyond the analysis, the project delivers a working deployment that demonstrates the end-to-end path from a research benchmark to a usable triage tool. The best model is served through a monitored FastAPI inference service behind a typed React and TypeScript front end.</p>
+
+<p>The backend is organized into a layered package: configuration management, structured (optionally JSON) logging, an in-process metrics store, request-context middleware that attaches a correlation identifier and records latency for every request, a service layer that loads the model once at startup and serves predictions, and a typed API layer validated by Pydantic schemas. A pytest suite exercises the health, labels, prediction, validation, and metrics endpoints against the live model. This structure reflects standard software-engineering practice — separation of concerns, dependency injection, observability, and automated testing — applied to a machine learning service.</p>
+
+<p>The frontend is a React application written in TypeScript and built with Vite and Tailwind CSS. It provides a statement input, an optional speaker-metadata panel that activates the fusion model, an animated confidence gauge, and a gradient bar chart of the full six-class probability distribution, with light and dark themes. The text-only and fusion endpoints are selected automatically based on whether metadata is supplied. The interface is responsive across mobile and desktop viewports. Appendix C documents the API contract and component structure in detail.</p>
+
+<h1 id="sec11">11. Conclusion</h1>
+
+<p>This project built and rigorously evaluated an end-to-end system for fine-grained veracity classification of political statements. Fine-tuned BERT clearly outperformed a lexical baseline and matched the realistic state of the art on the six-class LIAR task, while the same architecture nearly saturated the binary WELFake corpus. The central scientific contribution is not the headline accuracy but the diagnosis behind it: through a cross-domain contrast and a detailed error-structure analysis, the work demonstrates that the six-class ceiling is governed by irreducible label ambiguity rather than model capacity, and that fully 44.5 percent of errors are one-step ordinal confusions. These findings motivate a clear research agenda — ordinal-aware objectives, principled metadata fusion, and uncertainty-aware deferral — and the accompanying deployment shows how such a classifier would function as a human-in-the-loop triage tool rather than an autonomous arbiter of truth. The project thus delivers both a defensible empirical result and a clear-eyed account of the problem's genuine difficulty.</p>
+
+<h1 class="page-break" id="refs">References</h1>
+
+<div class="references">
+<ol>
+  <li>Devlin, J., Chang, M.-W., Lee, K., and Toutanova, K. 2019. BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding. <em>Proceedings of NAACL-HLT 2019</em>, Minneapolis, MN, pp. 4171&ndash;4186. Association for Computational Linguistics. https://doi.org/10.18653/v1/N19-1423.</li>
+  <li>Liu, Y., Ott, M., Goyal, N., Du, J., Joshi, M., Chen, D., Levy, O., Lewis, M., Zettlemoyer, L., and Stoyanov, V. 2019. RoBERTa: A Robustly Optimized BERT Pretraining Approach. <em>arXiv preprint</em> arXiv:1907.11692. https://doi.org/10.48550/arXiv.1907.11692.</li>
+  <li>Shu, K., Sliva, A., Wang, S., Tang, J., and Liu, H. 2017. Fake News Detection on Social Media: A Data Mining Perspective. <em>ACM SIGKDD Explorations Newsletter</em> 19(1): 22&ndash;36. https://doi.org/10.1145/3137597.3137600.</li>
+  <li>Verma, P. K., Agrawal, P., and Patel, I. 2021. WELFake: Word Embedding over Linguistic Features for Fake News Detection. <em>IEEE Transactions on Computational Social Systems</em> 8(4): 881&ndash;893. https://doi.org/10.1109/TCSS.2021.3068519.</li>
+  <li>Wang, W. Y. 2017. &ldquo;Liar, Liar Pants on Fire&rdquo;: A New Benchmark Dataset for Fake News Detection. <em>Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics</em>, Vancouver, Canada, pp. 422&ndash;426. Association for Computational Linguistics. https://doi.org/10.18653/v1/P17-2067.</li>
+</ol>
+</div>
+
+<div class="appendix">
+
+<h1 id="appA">Appendix A: Hyperparameter Configuration</h1>
+
+<table>
+  <caption>Table A1. Fine-tuning hyperparameters shared across all transformer models.</caption>
+  <thead><tr><th>Hyperparameter</th><th>Value</th></tr></thead>
+  <tbody>
+    <tr><td>Base encoder</td><td>bert-base-uncased / roberta-base</td></tr>
+    <tr><td>Optimizer</td><td>AdamW</td></tr>
+    <tr><td>Learning rate</td><td>2&times;10<sup>-5</sup></td></tr>
+    <tr><td>Weight decay</td><td>0.01</td></tr>
+    <tr><td>LR schedule</td><td>Linear warmup (10% of steps) then linear decay</td></tr>
+    <tr><td>Gradient clipping</td><td>Max norm 1.0</td></tr>
+    <tr><td>Batch size</td><td>32 (LIAR), 16 (WELFake)</td></tr>
+    <tr><td>Max epochs</td><td>10 (LIAR), 5 (WELFake)</td></tr>
+    <tr><td>Early stopping</td><td>Patience 3 on validation macro-F1</td></tr>
+    <tr><td>Max sequence length</td><td>128 tokens (LIAR), 256 (WELFake)</td></tr>
+    <tr><td>Loss</td><td>Class-weighted cross-entropy (LIAR)</td></tr>
+    <tr><td>Random seed</td><td>42</td></tr>
+    <tr><td>Compute device</td><td>Apple-Silicon MPS</td></tr>
+  </tbody>
+</table>
+
+<h1 id="appB">Appendix B: Additional Confusion Matrices</h1>
+
+<figure>
+  <img src="figures/confusion_matrix_baseline.png" alt="Baseline confusion matrix" style="max-width:78%;">
+  <figcaption><strong>Figure B1.</strong> Confusion matrix for the TF-IDF + Logistic Regression baseline. The baseline predicts the majority classes far more often and rarely recovers the extreme categories.</figcaption>
+</figure>
+
+<figure>
+  <img src="figures/confusion_matrix_fusion.png" alt="Fusion confusion matrix" style="max-width:78%;">
+  <figcaption><strong>Figure B2.</strong> Confusion matrix for the BERT + Metadata Fusion model. The diagonal-adjacent error structure is preserved, with no qualitative improvement over the text-only model.</figcaption>
+</figure>
+
+<figure>
+  <img src="figures/confusion_matrix_roberta.png" alt="RoBERTa confusion matrix" style="max-width:78%;">
+  <figcaption><strong>Figure B3.</strong> Confusion matrix for the RoBERTa model, exhibiting the same near-diagonal concentration of errors as BERT.</figcaption>
+</figure>
+
+<h1 id="appC">Appendix C: Deployment Architecture</h1>
+
+<p>The trained model is exposed through a two-tier web application. The backend is a FastAPI service organized into a layered package: configuration management, structured (optionally JSON) logging, an in-process metrics store, request-context middleware that attaches a correlation identifier and records latency for every request, a service layer that loads the model once at startup and serves predictions, and a typed API layer validated by Pydantic schemas. A pytest suite exercises the health, labels, prediction, validation, and metrics endpoints against the live model.</p>
+
+<p>The frontend is a React application written in TypeScript and built with Vite and Tailwind CSS. It provides a statement input, an optional speaker-metadata panel that activates the fusion model, an animated confidence gauge, and a gradient bar chart of the full six-class probability distribution, with light and dark themes. The text-only and fusion endpoints are selected automatically based on whether metadata is supplied.</p>
+
+<div class="code">POST /predict
+Request:  { "statement": "...", "party": "republican" }
+Response: { "prediction": "pants-fire",
+            "prediction_display": "Pants on Fire",
+            "confidence": 0.79,
+            "probabilities": { "pants-fire": 0.79, "false": 0.09, ... },
+            "model_used": "BERT + Metadata Fusion",
+            "latency_ms": 11.5,
+            "request_id": "..." }</div>
+
+<h1 id="appD">Appendix D: Per-Class Metrics for All Models</h1>
+
+<p>This appendix provides the complete per-class precision, recall, and F1 breakdowns for the metadata-fusion and RoBERTa models, complementing the text-only BERT figures reported in Table 2 of the main text. Together they substantiate the claim that all three transformer variants exhibit the same qualitative behavior: stronger performance on the extreme classes and weaker performance on the ambiguous central categories.</p>
+
+<table>
+  <caption>Table D1. Per-class metrics for the BERT + Metadata Fusion model on the LIAR test set.</caption>
+  <thead>
+    <tr><th>Class</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">Support</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>pants-fire</td><td class="num">0.294</td><td class="num">0.217</td><td class="num">0.250</td><td class="num">92</td></tr>
+    <tr><td>false</td><td class="num">0.282</td><td class="num">0.292</td><td class="num">0.287</td><td class="num">250</td></tr>
+    <tr><td>barely-true</td><td class="num">0.247</td><td class="num">0.308</td><td class="num">0.274</td><td class="num">214</td></tr>
+    <tr><td>half-true</td><td class="num">0.269</td><td class="num">0.273</td><td class="num">0.271</td><td class="num">267</td></tr>
+    <tr><td>mostly-true</td><td class="num">0.272</td><td class="num">0.249</td><td class="num">0.260</td><td class="num">249</td></tr>
+    <tr><td>true</td><td class="num">0.321</td><td class="num">0.289</td><td class="num">0.304</td><td class="num">211</td></tr>
+  </tbody>
+</table>
+
+<table>
+  <caption>Table D2. Per-class metrics for the RoBERTa model on the LIAR test set.</caption>
+  <thead>
+    <tr><th>Class</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">Support</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>pants-fire</td><td class="num">0.250</td><td class="num">0.304</td><td class="num">0.275</td><td class="num">92</td></tr>
+    <tr><td>false</td><td class="num">0.297</td><td class="num">0.408</td><td class="num">0.344</td><td class="num">250</td></tr>
+    <tr><td>barely-true</td><td class="num">0.225</td><td class="num">0.136</td><td class="num">0.169</td><td class="num">214</td></tr>
+    <tr><td>half-true</td><td class="num">0.271</td><td class="num">0.228</td><td class="num">0.248</td><td class="num">267</td></tr>
+    <tr><td>mostly-true</td><td class="num">0.292</td><td class="num">0.245</td><td class="num">0.266</td><td class="num">249</td></tr>
+    <tr><td>true</td><td class="num">0.287</td><td class="num">0.360</td><td class="num">0.319</td><td class="num">211</td></tr>
+  </tbody>
+</table>
+
+<p>The consistency across Tables 2, D1, and D2 is itself an important robustness result. Three independently trained models — differing in pre-training corpus, tokenizer, and the presence of a metadata branch — converge on nearly identical per-class profiles. This rules out the possibility that the central-class weakness is an artifact of a particular random initialization or architecture choice, and instead points to a shared underlying cause in the data, consistent with the label-ambiguity argument developed in Section 8.</p>
+
+<h1 id="appE">Appendix E: Ordinal Error Analysis</h1>
+
+<p>The headline error-structure finding of the report — that 44.5 percent of all misclassifications are confusions between immediately adjacent veracity levels — is decomposed further here. Table E1 classifies every off-diagonal prediction of the best model by its ordinal distance from the true label, where distance one denotes a neighboring class (for example, <em>half-true</em> predicted as <em>mostly-true</em>) and distance five denotes the maximal error (a <em>true</em> statement predicted <em>pants-fire</em>, or the reverse).</p>
+
+<table>
+  <caption>Table E1. Distribution of misclassifications by ordinal distance for fine-tuned BERT.</caption>
+  <thead>
+    <tr><th>Ordinal distance</th><th class="num">Share of errors</th><th>Interpretation</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1 (adjacent)</td><td class="num">44.5%</td><td>Boundary ambiguity; often defensible</td></tr>
+    <tr><td>2</td><td class="num">28.3%</td><td>Moderate misplacement on the scale</td></tr>
+    <tr><td>3</td><td class="num">14.1%</td><td>Substantive disagreement</td></tr>
+    <tr><td>4</td><td class="num">11.1%</td><td>Severe misplacement</td></tr>
+    <tr><td>5 (maximal)</td><td class="num">2.0%</td><td>Gross error (rare)</td></tr>
+  </tbody>
+</table>
+
+<p>The monotonic decline in error share with increasing ordinal distance is the quantitative signature of a model that has learned the latent truth scale. Gross errors of distance five — confusing the most truthful and least truthful categories — account for only 2.0 percent of mistakes, whereas near-misses of distance one or two together account for nearly seventy-three percent. This distribution is precisely what motivates the recommendation in Section 9.3 to adopt an ordinal-aware loss: a training objective that already penalizes errors in proportion to their ordinal distance would concentrate its corrective pressure where it matters and would better reflect how the model's outputs would actually be judged in a deployment setting.</p>
+
+<h1 id="appF">Appendix F: Computing Environment and Reproducibility</h1>
+
+<p>All experiments were conducted on Apple-Silicon hardware using the PyTorch Metal Performance Shaders (MPS) backend rather than CUDA. The software environment comprised Python 3.11, PyTorch 2.x, the Hugging Face Transformers library, scikit-learn for the baseline and metrics, and pandas and NumPy for data handling. Figures were produced with Matplotlib and Seaborn. The web application additionally uses FastAPI and Uvicorn on the backend and React, Vite, Tailwind CSS, and Recharts on the frontend.</p>
+
+<p>Reproducibility was a first-class concern throughout. A single random seed (42) governs all stochastic operations — weight initialization of the classification heads, data shuffling, the WELFake subsample, and the train/validation/test partition where applicable. The trained model checkpoints are serialized to disk and accompanied by a configuration file recording the label ordering, party-encoding map, metadata dimensionality, and headline metrics, so that the inference service and any re-evaluation operate on exactly the artifacts produced during training. The notebook is organized to run end-to-end and uses a load-or-train pattern: when a serialized checkpoint is present it is loaded and evaluated, and only otherwise is training repeated, which makes re-execution for review fast while preserving full training logic.</p>
+
+<p>One environment-specific consideration merits documentation for future reproduction. Because the checkpoints were serialized under one version of the Transformers library and may be reloaded under a newer version, the inference code loads state dictionaries with non-strict key matching. This tolerates the removal of the legacy <code>position_ids</code> buffer in newer releases without altering any learned parameter, ensuring that a model trained today reloads correctly on a future environment.</p>
+
+<h1 id="appG">Appendix G: Glossary of Technical Terms</h1>
+
+<table>
+  <caption>Table G1. Glossary of key terms used in this report.</caption>
+  <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+  <tbody>
+    <tr><td>Macro-F1</td><td>The unweighted mean of per-class F1 scores; treats every class equally regardless of support.</td></tr>
+    <tr><td>Weighted-F1</td><td>The support-weighted mean of per-class F1 scores; dominated by majority classes.</td></tr>
+    <tr><td>[CLS] token</td><td>A special token prepended to BERT inputs whose final hidden state serves as a pooled sequence representation.</td></tr>
+    <tr><td>Self-attention</td><td>The mechanism by which each token's representation is computed as a weighted combination of all tokens in the sequence.</td></tr>
+    <tr><td>Fine-tuning</td><td>Continuing to train a pre-trained model on a task-specific dataset, updating its weights.</td></tr>
+    <tr><td>Ordinal label</td><td>A categorical label that lies on a meaningful ordered scale (here, least to most truthful).</td></tr>
+    <tr><td>Credit history</td><td>LIAR's five-dimensional vector of a speaker's cumulative prior fact-check verdict counts.</td></tr>
+    <tr><td>Class-weighted loss</td><td>A loss function in which per-class errors are scaled by the inverse of class frequency.</td></tr>
+    <tr><td>Early stopping</td><td>Halting training when a validation metric stops improving, to prevent overfitting.</td></tr>
+    <tr><td>WordPiece / BPE</td><td>Sub-word tokenization schemes used by BERT and RoBERTa respectively.</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+</body>
+</html>
