@@ -115,6 +115,13 @@ class VeracityPredictor:
     def _load_config(self) -> None:
         """Load model_config.json (party map, metadata dim) from disk or Hub."""
         cfg_path = os.path.join(self.models_dir, "model_config.json")
+        # Fallback 1: a copy bundled alongside the application code.
+        if not os.path.exists(cfg_path):
+            bundled = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                   "model_config.json")
+            if os.path.exists(bundled):
+                cfg_path = bundled
+        # Fallback 2: download from the Hub if configured.
         if not os.path.exists(cfg_path) and self.settings.hf_repo_id:
             try:
                 cfg_path = self._ensure_weights("model_config.json")
@@ -125,6 +132,8 @@ class VeracityPredictor:
                 self.config = json.load(f)
             self.party2id = self.config.get("party2id", {})
             self.metadata_dim = int(self.config.get("metadata_dim", 29))
+            logger.info("Loaded model_config.json (parties=%d, metadata_dim=%d)",
+                        len(self.party2id), self.metadata_dim)
         else:
             logger.warning("model_config.json not found; using defaults")
 

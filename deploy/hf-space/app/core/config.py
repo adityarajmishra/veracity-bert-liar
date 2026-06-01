@@ -15,7 +15,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="APP_", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="APP_", extra="ignore",
+                                      protected_namespaces=("settings_",))
 
     # --- Service metadata ---
     app_name: str = "Veracity API — Misinformation Detection"
