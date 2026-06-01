@@ -83,26 +83,62 @@ class VeracityPredictor:
         self._load_weights(self.text_model, "bert_text_only.pt")
         self.text_model.to(self.device).eval()
 
-        # Fusion model (optional)
-        fusion_path = os.path.join(self.models_dir, "bert_metadata_fusion.pt")
-        if os.path.exists(fusion_path):
-            self.fusion_model = BertMetadataFusionModel(
-                metadata_dim=self.metadata_dim,
-                num_classes=len(LABEL_ORDER),
-                encoder=self.settings.base_encoder,
-            )
-            self._load_weights(self.fusion_model, "bert_metadata_fusion.pt")
-            self.fusion_model.to(self.device).eval()
+        # Fusion model (optional). Load if present locally OR downloadable.
+        fusion_available = os.path.exists(
+            os.path.join(self.models_dir, "bert_metadata_fusion.pt")
+        ) or bool(self.settings.hf_repo_id)
+        if fusion_available:
+            try:
+                self.fusion_model = BertMetadataFusionModel(
+                    metadata_dim=self.metadata_dim,
+                    num_classes=len(LABEL_ORDER),
+                    encoder=self.settings.base_encoder,
+                )
+                self._load_weights(self.fusion_model, "bert_metadata_fusion.pt")
+                self.fusion_model.to(self.device).eval()
+            except FileNotFoundError:
+                self.fusion_model = None
+                logger.warning("Fusion model unavailable; metadata requests will use text model")
         else:
             logger.warning("Fusion model not found; metadata requests will use text model")
 
         self._loaded = True
         logger.info("Models loaded in %.1fs", time.perf_counter() - t0)
 
+    def _ensure_weights(self, fname: str) -> str:
+        """Return a local path to the weight file, downloading from the
+        Hugging Face Hub if it is not already present (e.g. on a fresh server)."""
+        local_path = os.path.join(self.models_dir, fname)
+        if os.path.exists(local_path):
+            return local_path
+
+        repo = self.settings.hf_repo_id
+        if not repo:
+            raise FileNotFoundError(
+                f"Model weights not found: {local_path}. "
+                "Set APP_HF_REPO_ID to download them from the Hugging Face Hub."
+            )
+
+        try:
+            from huggingface_hub import hf_hub_download
+        except ImportError as exc:  # pragma: no cover
+            raise RuntimeError(
+                "huggingface_hub is required to download weights; add it to requirements."
+            ) from exc
+
+        logger.info("Downloading %s from Hugging Face Hub repo %s ...", fname, repo)
+        os.makedirs(self.models_dir, exist_ok=True)
+        downloaded = hf_hub_download(
+            repo_id=repo,
+            filename=fname,
+            token=self.settings.hf_token or None,
+            local_dir=self.models_dir,
+        )
+        logger.info("Downloaded %s", fname)
+        return downloaded
+
     def _load_weights(self, model: torch.nn.Module, fname: str) -> None:
-        path = os.path.join(self.models_dir, fname)
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"Model weights not found: {path}")
+        path = self._ensure_weights(fname)
         state = torch.load(path, map_location=self.device)
         # strict=False tolerates legacy buffer keys (e.g. position_ids).
         missing, unexpected = model.load_state_dict(state, strict=False)

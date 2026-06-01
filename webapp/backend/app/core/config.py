@@ -55,6 +55,12 @@ class Settings(BaseSettings):
     max_sequence_length: int = 128
     base_encoder: str = "bert-base-uncased"
 
+    # --- Hugging Face Hub (production weight hosting) ---
+    # When weights are absent locally (e.g. a fresh Render instance), download
+    # them from this Hub repo on startup. Leave empty to require local files.
+    hf_repo_id: str = "adityarajmishra/veracity-bert-liar"  # e.g. "adityarajmishra/veracity-bert-liar"
+    hf_token: str = ""    # only needed for private repos
+
     @property
     def cors_origins(self) -> List[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]

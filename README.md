@@ -2,157 +2,172 @@
 
 # 🛰️ Veracity.ai
 
-### Fine-grained misinformation detection with transformer language models
+### Fine-Grained Misinformation Detection with Transformer Language Models
 
-*Can a machine tell how true a political statement is? This project finds out — and explains exactly why it can only go so far.*
+*Can a machine tell how true a political statement is? This project finds out — across six levels, from **True** to **Pants&nbsp;on&nbsp;Fire**.*
 
-<p>
-  <img alt="Python" src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white">
-  <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white">
-  <img alt="Transformers" src="https://img.shields.io/badge/🤗%20Transformers-BERT%20%7C%20RoBERTa-FFD21E">
-  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white">
-  <img alt="React" src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white">
-  <img alt="License" src="https://img.shields.io/badge/License-MIT-22c55e">
-</p>
+<br/>
 
-<p>
-  <a href="#-live-demo">Live Demo</a> ·
-  <a href="#-quick-start">Quick Start</a> ·
-  <a href="#-api">API</a> ·
-  <a href="#-results">Results</a> ·
-  <a href="#-key-findings">Key Findings</a> ·
-  <a href="#-report">Report</a>
-</p>
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)
+![Transformers](https://img.shields.io/badge/🤗_Transformers-4.30-FFD21E)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-22c55e)
+
+**[📄 Final Report](report/Rahul_Mishra_453_P4_Final_Report.pdf)** ·
+**[📓 Notebook](notebook/Rahul_Mishra_453_P4_Notebook.ipynb)** ·
+**[🤗 Model Weights](https://huggingface.co/adityarajmishra/veracity-bert-liar)** ·
+**[🔌 API Guide](webapp/API.md)**
 
 </div>
 
 ---
 
-## ✨ What is this?
+## ✨ Overview
 
-**Veracity.ai** classifies the truthfulness of a short political or news statement across **six ordinal levels** — from `True` to `Pants on Fire` — using a fine-tuned **BERT** model trained on the **LIAR** benchmark (Wang 2017).
+**Veracity.ai** is an open-source NLP system that classifies the truthfulness of a
+political or news statement on a **six-level ordinal scale** using a fine-tuned
+**BERT** model trained on the **LIAR** benchmark. Unlike the common binary
+"real vs. fake" approach, it mirrors how professional fact-checkers actually
+reason — distinguishing *pants-fire*, *false*, *barely-true*, *half-true*,
+*mostly-true*, and *true*.
 
-It is a complete, end-to-end project:
+The project spans the **entire ML lifecycle**: data acquisition → exploratory
+analysis → preprocessing → model design → training → rigorous evaluation →
+interpretive analysis → and a **production-grade, deployable web application**
+with a typed React UI and a monitored FastAPI inference service.
 
-- 🧠 **Four models** benchmarked: TF-IDF + Logistic Regression, fine-tuned BERT, a BERT + speaker-metadata fusion network, and RoBERTa.
-- 🌐 **A production-grade web app** — a typed React frontend backed by a monitored, rate-limited FastAPI service.
-- 📊 **A rigorous 30-page analysis** that turns a "modest" accuracy number into a defensible scientific finding.
-- 🔓 **Fully open source** under the MIT license.
-
-> **Responsible-AI note.** Predictions are *probabilistic estimates, not authoritative fact-checks.* The model classifies **text, not people**, and is built as a human-in-the-loop triage aid.
+> 🧠 **The headline insight:** raw accuracy (≈0.28 on six classes) tells only
+> half the story. **44.5% of all errors are between *adjacent* veracity
+> levels** — proof the model learned the latent "truth scale" and that the
+> ceiling is driven by genuine label ambiguity, not model weakness.
 
 ---
 
-## 🎯 The problem
+## 🎯 The Problem & Why It's Hard
 
-Most "fake news" research solves the easy binary problem (*real* vs. *fake*). This project tackles the harder, more honest one: **six-level veracity**, mirroring how professional fact-checkers actually reason. That choice surfaces three deep challenges:
+Automated misinformation detection is a pressing societal need — fabricated
+claims spread faster than fact-checkers can respond. This project tackles the
+*hard* version of the task, which surfaces three intertwined challenges:
 
-| Challenge | Why it's hard |
+| Challenge | Why it matters |
 |---|---|
-| **Ordinal label ambiguity** | The line between `half-true` and `mostly-true` is editorial judgment — irreducible label noise that caps any model's ceiling. |
-| **Short text** | LIAR statements average **under 20 tokens**, starving the model of context. |
-| **Class imbalance** | The critical `pants-fire` class has ~⅕ the examples of the majority classes. |
-
----
-
-## 🏗️ Architecture
-
-```
-                          ┌─────────────────────────────┐
-   "Crime rose 500%..."   │   Frontend — React + TS      │
-        │                 │   Vite · Tailwind · Recharts │
-        ▼                 │   (deployed on Vercel)       │
-   ┌─────────┐  HTTPS      └──────────────┬──────────────┘
-   │ Browser │ ───────────────────────────┤  POST /predict
-   └─────────┘                            ▼
-                          ┌─────────────────────────────┐
-                          │   Backend — FastAPI          │
-                          │   rate-limit · logging ·     │
-                          │   metrics · security headers │
-                          │   (deployed on Render)       │
-                          └──────────────┬──────────────┘
-                                         ▼
-              ┌───────────────────────────────────────────────┐
-              │  Text  → BERT [CLS] (768-d) ─┐                  │
-              │                              ├─ fuse → 6 classes│
-              │  Meta  → FFN (128-d) ────────┘                  │
-              └───────────────────────────────────────────────┘
-```
-
-The **dual-stream fusion** model encodes the statement through BERT and the
-speaker's party + credit-history through a parallel feedforward branch, then
-concatenates both before the classification head.
+| 🪜 **Ordinal label ambiguity** | The boundary between *half-true* and *mostly-true* is editorial judgment, not objective truth — irreducible label noise caps achievable accuracy. |
+| ✂️ **Short-text representation** | LIAR statements average **< 20 tokens**, starving the model of context. |
+| ⚖️ **Class imbalance** | The rare *pants-fire* class has ~⅕ the examples of majority classes — yet it's the one we most want to catch. |
 
 ---
 
 ## 📊 Results
 
-Test-set performance on the **LIAR** benchmark (six-class) and **WELFake** (binary):
+<div align="center">
 
-| Model | Accuracy | Macro-F1 |
-|---|:---:|:---:|
-| TF-IDF + Logistic Regression | 0.227 | 0.218 |
-| **🏆 BERT (text-only)** | **0.284** | **0.284** |
-| BERT + Metadata Fusion | 0.277 | 0.274 |
-| RoBERTa | 0.278 | 0.270 |
-| Wang (2017) baseline | 0.274 | — |
-| BERT on WELFake (binary) | **0.988** | **0.988** |
+| Model | Accuracy | Macro-F1 | Weighted-F1 |
+|---|:---:|:---:|:---:|
+| TF-IDF + Logistic Regression | 0.227 | 0.218 | 0.226 |
+| **🏆 BERT (text-only)** | **0.284** | **0.284** | **0.280** |
+| BERT + Metadata Fusion | 0.277 | 0.274 | 0.277 |
+| RoBERTa (text-only) | 0.278 | 0.270 | 0.271 |
+| _Wang (2017) baseline_ | _0.274_ | _—_ | _—_ |
+| **BERT on WELFake (binary)** | **0.988** | **0.988** | **—** |
 
-Fine-tuned BERT beats the lexical baseline by ~25% relative and clears the published benchmark, sitting far above the 0.167 random-choice floor.
+</div>
+
+Fine-tuned BERT beats the lexical baseline and the original LIAR benchmark, and
+sits far above the 0.167 random-choice floor. The **same architecture scores
+98.8% on the cleaner binary WELFake task** — a controlled contrast proving the
+LIAR ceiling is data-driven, not a model defect.
+
+<div align="center">
+<img src="figures/model_comparison.png" alt="Model comparison" width="80%"/>
+<br/><em>Model performance and per-class F1 across all four models.</em>
+</div>
 
 ---
 
-## 💡 Key Findings
+## 🏗️ Architecture
 
-> The headline number isn't the story — **the error structure is.**
+A deliberate progression from shallow lexical features to deep contextual
+representations and multi-modal fusion:
 
-- 🎯 **44.5% of all errors are between *adjacent* veracity levels** (e.g. `half-true` → `mostly-true`); gross five-step errors are just **2%**. The model learned the latent truth *scale* and only stumbles on boundaries humans dispute.
-- 🔬 **The ceiling is data-driven, not model-driven.** The *same* BERT scores **0.988** on clean binary WELFake but **0.284** on ambiguous six-class LIAR. Same code, same encoder — only the data differ.
-- 🧩 **Metadata fusion slightly *hurt*.** Speaker history separates classes in aggregate yet adds variance faster than signal at the instance level — a lesson on the gap between exploratory correlation and predictive value.
-- ⚙️ **RoBERTa didn't help** either: when a task is *label-limited* rather than *representation-limited*, a stronger encoder can't move the bound.
+```
+                          ┌──────────────────────────────────────────┐
+   "Crime rose 500%..."   │  ① TF-IDF + Logistic Regression (floor)   │
+            │             ├──────────────────────────────────────────┤
+            ▼             │  ② BERT  →  [CLS] (768-d)  →  6 logits     │ ★ best
+   ┌─────────────────┐    ├──────────────────────────────────────────┤
+   │  Tokenize +     │ →  │  ③ Dual-stream fusion:                    │
+   │  normalize      │    │     text [CLS] ⊕ speaker metadata (29-d)  │
+   └─────────────────┘    ├──────────────────────────────────────────┤
+                          │  ④ RoBERTa  →  [CLS]  →  6 logits         │
+                          └──────────────────────────────────────────┘
+                                            │
+                                            ▼
+                            softmax → 6-class probability distribution
+```
+
+**Key design choices:** class-weighted cross-entropy (so rare classes aren't
+ignored) and **macro-F1** as both metric *and* early-stopping criterion (so
+accuracy can't be inflated by predicting only majority classes).
+
+---
+
+## 🖥️ The Web Application
+
+A full-stack, deployable product — not just a notebook:
+
+- ⚛️ **Frontend** — React 18 + TypeScript + Vite + Tailwind + Framer Motion.
+  Animated confidence gauge, gradient probability chart, light/dark theme,
+  fully responsive, and a **Stripe-style interactive API reference**.
+- 🚀 **Backend** — FastAPI with structured logging, request-correlation IDs,
+  in-process metrics, **per-IP rate limiting**, **security headers**, and
+  CORS lockdown. Auto-downloads model weights from the 🤗 Hub on first boot.
+
+```
+┌──────────────────────────┐   HTTPS    ┌───────────────────────────┐
+│  React SPA (Vercel)      │ ─────────▶ │  FastAPI + PyTorch (Render)│
+│  veracity-…vercel.app    │            │  /predict · /docs · /health │
+└──────────────────────────┘            └───────────────────────────┘
+```
 
 ---
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Python 3.11+ · Node 20+ · ~2 GB free disk for model weights
-
-### 1. Get model weights
-The trained `.pt` files (~1.7 GB) are not committed. Generate them by running
-the notebook in `notebook/`, or place existing weights in `models/`.
-
-### 2. Run the full stack (one command)
+### Run the full app (one command)
 
 ```bash
 cd webapp
-npm run install:all     # installs root + frontend + backend deps
-npm run dev             # backend :8000 AND frontend :5173, together
+npm run install:all     # installs root + frontend + backend dependencies
+npm run dev             # backend → :8000   frontend → :5173
 ```
 
-Open **http://localhost:5173**. The header status pill turns green once the
-model has loaded.
+Open **http://localhost:5173**. The status pill turns green once the model
+loads. Weights are read from `models/`; if absent they auto-download from the
+[Hugging Face Hub](https://huggingface.co/adityarajmishra/veracity-bert-liar).
 
-| Script | What it does |
-|---|---|
-| `npm run dev` | Run backend + frontend concurrently |
-| `npm run dev:backend` | Backend only (uvicorn :8000) |
-| `npm run dev:frontend` | Frontend only (Vite :5173) |
-| `npm run build` | Production build of the frontend |
-| `npm run test:backend` | Run the backend pytest suite |
+### Reproduce the research
+
+```bash
+pip install torch transformers scikit-learn pandas numpy matplotlib seaborn jupyter
+jupyter notebook notebook/Rahul_Mishra_453_P4_Notebook.ipynb
+```
+
+The notebook uses a **load-or-train** pattern: cached weights are loaded if
+present, otherwise models train from scratch (≈2 h on Apple-Silicon MPS).
 
 ---
 
-## 🔌 API
+## 🔌 Consume the API
 
-No API key required — access is governed by fair-use rate limits. Full guide in
-[`webapp/API.md`](webapp/API.md); interactive docs live at `/docs`.
+No API key required — open access within fair-use rate limits.
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/predict" \
   -H "Content-Type: application/json" \
-  -d '{"statement":"Crime rose 500% in two years."}'
+  -d '{"statement": "Crime rose 500% in the last two years."}'
 ```
 
 ```json
@@ -161,87 +176,88 @@ curl -X POST "http://127.0.0.1:8000/predict" \
   "prediction_display": "Pants on Fire",
   "confidence": 0.79,
   "probabilities": { "pants-fire": 0.79, "false": 0.09, "...": "..." },
-  "model_used": "BERT (text-only)",
-  "latency_ms": 11.5,
-  "request_id": "1f3c…"
+  "model_used": "BERT + Metadata Fusion",
+  "latency_ms": 11.5
 }
 ```
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/predict` | Classify a statement (optional speaker metadata) |
-| `GET` | `/health` | Liveness + model status |
-| `GET` | `/labels` | The six veracity classes |
-| `GET` | `/examples` | Sample statements |
-| `GET` | `/metrics` | Uptime, request counts, latency, model metrics |
-| `GET` | `/api-info` | License, repo, rate limits, usage policy |
+📖 Full reference: **[webapp/API.md](webapp/API.md)** · interactive docs at `/docs`.
 
-**Built-in protections:** per-IP rate limiting (30/min on `/predict`), CORS
-locked to the official frontend in production, security headers, and Pydantic
-input validation.
+| Endpoint | Description |
+|---|---|
+| `POST /predict` | Classify a statement (optional speaker metadata) |
+| `GET /health` | Liveness + model-loaded + device |
+| `GET /labels` | The six veracity classes |
+| `GET /metrics` | Uptime, request counts, model performance |
+| `GET /api-info` | License, rate limits, usage policy |
 
 ---
 
-## 🗂️ Repository Layout
+## 📁 Repository Structure
 
 ```
-.
-├── report/          📄 Final report (PDF + HTML) and figures
-├── notebook/        📓 Executed Jupyter notebook (.ipynb + .html)
-├── models/          🧠 Model config + metrics (weights regenerated via notebook)
-├── datasets/        📦 LIAR benchmark (+ instructions for WELFake)
-├── figures/         📈 All generated charts and confusion matrices
-└── webapp/          🌐 Monorepo
-    ├── backend/     ⚡ FastAPI service (app/, tests/, Dockerfile)
-    └── frontend/    🎨 React + TypeScript SPA
+veracity-bert-liar/
+├── 📄 report/        Final report (PDF + HTML) and prior milestone PDFs
+├── 📓 notebook/      Executed Jupyter notebook (.ipynb + .html)
+├── 🧠 models/        Model config + metrics (weights on 🤗 Hub)
+├── 📊 datasets/      LIAR benchmark (+ WELFake download guide)
+├── 🖼️ figures/       All EDA + results figures
+└── 🖥️ webapp/        Monorepo: FastAPI backend + React/TS frontend
+    ├── backend/      Layered API: routes, services, security, tests
+    └── frontend/     React SPA with Stripe-style API docs
 ```
 
 ---
 
-## 🧪 Tech Stack
+## 🔬 Methodology Highlights
 
-**ML** — PyTorch · 🤗 Transformers (BERT, RoBERTa) · scikit-learn · pandas
-**Backend** — FastAPI · Uvicorn · Pydantic · pytest
-**Frontend** — React 18 · TypeScript · Vite · Tailwind CSS · Recharts · Framer Motion
-**Deploy** — Vercel (frontend) · Render (backend) · Hugging Face Hub (weights)
+- **Datasets:** LIAR (12,836 statements, 6-class) + WELFake (~72k articles, binary).
+- **Preprocessing:** Unicode NFD + lowercase → WordPiece/BPE (128 tokens);
+  party one-hot + L2-normalized credit-history → 29-d metadata vector.
+- **Training:** AdamW (lr 2e-5), 10% linear warmup, gradient clipping, early
+  stopping on validation macro-F1 (patience 3).
+- **Evaluation:** accuracy, macro/weighted-F1, per-class breakdown, confusion
+  matrices, and an **ordinal-distance error analysis**.
 
----
+### 💡 Breakthrough Findings
 
-## 📄 Report
-
-The full **30-page analysis** is in [`report/Rahul_Mishra_453_P4_Final_Report.pdf`](report/Rahul_Mishra_453_P4_Final_Report.pdf) —
-problem framing, literature review, mechanistic algorithm explanations, results,
-in-depth interpretation, and a concrete future-work agenda (ordinal-aware loss,
-calibrated fusion, uncertainty-aware deferral).
-
----
-
-## 📚 References
-
-1. **Devlin, J., et al.** (2019). *BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.* NAACL-HLT. [DOI](https://doi.org/10.18653/v1/N19-1423)
-2. **Liu, Y., et al.** (2019). *RoBERTa: A Robustly Optimized BERT Pretraining Approach.* [arXiv:1907.11692](https://doi.org/10.48550/arXiv.1907.11692)
-3. **Shu, K., et al.** (2017). *Fake News Detection on Social Media: A Data Mining Perspective.* ACM SIGKDD Explorations. [DOI](https://doi.org/10.1145/3137597.3137600)
-4. **Verma, P. K., et al.** (2021). *WELFake: Word Embedding over Linguistic Features for Fake News Detection.* IEEE TCSS. [DOI](https://doi.org/10.1109/TCSS.2021.3068519)
-5. **Wang, W. Y.** (2017). *"Liar, Liar Pants on Fire": A New Benchmark Dataset for Fake News Detection.* ACL. [DOI](https://doi.org/10.18653/v1/P17-2067)
+1. **Error structure > aggregate score.** 44.5% of errors are one ordinal step;
+   only 2% are maximal (5-step) errors — the model learned the truth scale.
+2. **The ceiling is the data, not the model** — proven by the LIAR (0.28) vs.
+   WELFake (0.99) contrast on identical code.
+3. **Aggregate signal ≠ instance utility** — speaker metadata that separates
+   classes in the mean *slightly hurt* per-statement prediction (overfitting).
+4. **Better pre-training ≠ better results** when a task is *label-limited*
+   rather than *representation-limited* (RoBERTa did not beat BERT here).
 
 ---
 
-## 📜 License & Disclaimer
+## 🛡️ Responsible Use
 
-Released under the **MIT License** — see [`LICENSE`](LICENSE).
+Predictions are **probabilistic estimates, not authoritative fact-checks.**
+The model classifies **text, not people**, and must not be used to assert that
+any individual has lied. It is designed as a **human-in-the-loop triage tool**.
 
-This is an academic, open-source research demonstration. It is **not** a
-fact-checking authority and is not affiliated with PolitiFact or the dataset
-authors. Veracity predictions are statistical estimates and must not be used to
-assert that any identifiable person has lied or acted wrongfully.
+---
+
+## 📚 Key References
+
+- Wang, W. Y. (2017). *"Liar, Liar Pants on Fire": A New Benchmark Dataset for Fake News Detection.* ACL.
+- Devlin et al. (2019). *BERT: Pre-training of Deep Bidirectional Transformers.* NAACL-HLT.
+- Liu et al. (2019). *RoBERTa: A Robustly Optimized BERT Pretraining Approach.* arXiv:1907.11692.
+- Verma, Agrawal & Patel (2021). *WELFake.* IEEE TCSS 8(4).
+
+---
+
+## 👤 Author
+
+**Rahul Mishra** — MS Data Science, Northwestern University
+*AI and Natural Language Processing*
 
 <div align="center">
 
----
+📜 **MIT License** · Built with PyTorch · 🤗 Transformers · FastAPI · React
 
-**Rahul Mishra** · MS Data Science, Northwestern University
-*AI and Natural Language Processing*
-
-⭐ Star this repo if you find it useful
+*If this project helped you, consider giving it a ⭐*
 
 </div>
