@@ -61,6 +61,15 @@ class Settings(BaseSettings):
     hf_repo_id: str = "adityarajmishra/veracity-bert-liar"  # e.g. "adityarajmishra/veracity-bert-liar"
     hf_token: str = ""    # only needed for private repos
 
+    # --- Memory mode ---
+    # On tiny instances (e.g. Render free 512 MB) loading two BERT models will
+    # OOM. "lite" loads only the text-only model; "full" also loads fusion.
+    model_mode: str = "lite"  # lite | full
+
+    @property
+    def lite_mode(self) -> bool:
+        return self.model_mode.lower() == "lite"
+
     @property
     def cors_origins(self) -> List[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]

@@ -64,11 +64,62 @@ class VeracityPredictor:
     def load(self) -> None:
         """Load tokenizer, config, and model weights. Called once on startup."""
         t0 = time.perf_counter()
-        logger.info("Loading models from %s (device=%s)", self.models_dir, self.device)
+        logger.info("Loading models from %s (device=%s, mode=%s)",
+                    self.models_dir, self.device,
+                    "lite" if self.settings.lite_mode else "full")
 
         self.tokenizer = BertTokenizer.from_pretrained(self.settings.base_encoder)
 
+        # Config (party map + metadata dim). Try local, else download from Hub.
+        self._load_config()
+
+        # Text-only model (primary). pretrained=False avoids a wasteful 440 MB
+        # second copy of base weights — our checkpoint supplies them.
+        self.text_model = BertClassifier(num_classes=len(LABEL_ORDER),
+                                         encoder=self.settings.base_encoder,
+                                         pretrained=False)
+        self._load_weights(self.text_model, "bert_text_only.pt")
+        self.text_model.to(self.device).eval()
+
+        # Fusion model only in full mode (it doubles RAM use).
+        if self.settings.lite_mode:
+            logger.info("Lite mode: skipping fusion model to conserve memory")
+            self.fusion_model = None
+        else:
+            fusion_available = os.path.exists(
+                os.path.join(self.models_dir, "bert_metadata_fusion.pt")
+            ) or bool(self.settings.hf_repo_id)
+            if fusion_available:
+                try:
+                    self.fusion_model = BertMetadataFusionModel(
+                        metadata_dim=self.metadata_dim,
+                        num_classes=len(LABEL_ORDER),
+                        encoder=self.settings.base_encoder,
+                        pretrained=False,
+                    )
+                    self._load_weights(self.fusion_model, "bert_metadata_fusion.pt")
+                    self.fusion_model.to(self.device).eval()
+                except FileNotFoundError:
+                    self.fusion_model = None
+                    logger.warning("Fusion model unavailable; using text model only")
+            else:
+                logger.warning("Fusion model not found; using text model only")
+
+        # Release any transient allocations from loading.
+        import gc
+        gc.collect()
+
+        self._loaded = True
+        logger.info("Models loaded in %.1fs", time.perf_counter() - t0)
+
+    def _load_config(self) -> None:
+        """Load model_config.json (party map, metadata dim) from disk or Hub."""
         cfg_path = os.path.join(self.models_dir, "model_config.json")
+        if not os.path.exists(cfg_path) and self.settings.hf_repo_id:
+            try:
+                cfg_path = self._ensure_weights("model_config.json")
+            except Exception:  # noqa: BLE001
+                logger.warning("Could not fetch model_config.json from Hub")
         if os.path.exists(cfg_path):
             with open(cfg_path) as f:
                 self.config = json.load(f)
@@ -76,34 +127,6 @@ class VeracityPredictor:
             self.metadata_dim = int(self.config.get("metadata_dim", 29))
         else:
             logger.warning("model_config.json not found; using defaults")
-
-        # Text-only model (primary)
-        self.text_model = BertClassifier(num_classes=len(LABEL_ORDER),
-                                         encoder=self.settings.base_encoder)
-        self._load_weights(self.text_model, "bert_text_only.pt")
-        self.text_model.to(self.device).eval()
-
-        # Fusion model (optional). Load if present locally OR downloadable.
-        fusion_available = os.path.exists(
-            os.path.join(self.models_dir, "bert_metadata_fusion.pt")
-        ) or bool(self.settings.hf_repo_id)
-        if fusion_available:
-            try:
-                self.fusion_model = BertMetadataFusionModel(
-                    metadata_dim=self.metadata_dim,
-                    num_classes=len(LABEL_ORDER),
-                    encoder=self.settings.base_encoder,
-                )
-                self._load_weights(self.fusion_model, "bert_metadata_fusion.pt")
-                self.fusion_model.to(self.device).eval()
-            except FileNotFoundError:
-                self.fusion_model = None
-                logger.warning("Fusion model unavailable; metadata requests will use text model")
-        else:
-            logger.warning("Fusion model not found; metadata requests will use text model")
-
-        self._loaded = True
-        logger.info("Models loaded in %.1fs", time.perf_counter() - t0)
 
     def _ensure_weights(self, fname: str) -> str:
         """Return a local path to the weight file, downloading from the
@@ -139,11 +162,15 @@ class VeracityPredictor:
 
     def _load_weights(self, model: torch.nn.Module, fname: str) -> None:
         path = self._ensure_weights(fname)
-        state = torch.load(path, map_location=self.device)
+        state = torch.load(path, map_location="cpu")
         # strict=False tolerates legacy buffer keys (e.g. position_ids).
         missing, unexpected = model.load_state_dict(state, strict=False)
         if missing:
             logger.debug("Missing keys for %s: %s", fname, missing)
+        # Free the on-disk state dict immediately so we don't hold two copies.
+        del state
+        import gc
+        gc.collect()
 
     @property
     def is_ready(self) -> bool:

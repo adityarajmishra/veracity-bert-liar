@@ -9,15 +9,20 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-# Install dependencies first for better layer caching
+# Install CPU-only PyTorch first (avoids pulling ~2 GB of CUDA/GPU libraries
+# that are useless on a CPU instance and inflate the image and memory).
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir torch==2.2.2 --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY app ./app
 
-# Model weights are mounted or copied into /models at deploy time
-ENV APP_MODELS_DIR=/models
+# Model weights are downloaded from the Hugging Face Hub on first boot.
+ENV APP_MODELS_DIR=/models \
+    APP_MODEL_MODE=lite \
+    OMP_NUM_THREADS=1
 
 EXPOSE 8000
 
