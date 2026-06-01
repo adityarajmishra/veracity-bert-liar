@@ -9,6 +9,7 @@ ENV PYTHONUNBUFFERED=1 \
     APP_JSON_LOGS=true \
     APP_MODEL_MODE=full \
     APP_HF_REPO_ID=adityarajmishra/veracity-bert-liar \
+    APP_ALLOWED_ORIGINS=https://veracity-bert-liar.vercel.app \
     APP_MODELS_DIR=/tmp/models \
     HF_HOME=/tmp/hf \
     OMP_NUM_THREADS=1

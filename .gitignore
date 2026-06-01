@@ -17,3 +17,6 @@ datasets/WELFake_Dataset.csv
 .DS_Store
 .env
 .env.local
+
+# Nested Hugging Face Space git repo (pushed separately to HF, not GitHub)
+deploy/hf-space/.git/
