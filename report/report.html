@@ -264,6 +264,7 @@ table.toc td.sub a { color: #222; }
   <tr><td><a href="#appE">Appendix E: Ordinal Error Analysis</a></td><td class="num">28</td></tr>
   <tr><td><a href="#appF">Appendix F: Computing Environment and Reproducibility</a></td><td class="num">28</td></tr>
   <tr><td><a href="#appG">Appendix G: Glossary of Technical Terms</a></td><td class="num">29</td></tr>
+  <tr><td><a href="#appH">Appendix H: Application Screenshots</a></td><td class="num">30</td></tr>
 </table>
 
 <h1 class="page-break" id="sec1">1. Introduction</h1>
@@ -649,6 +650,53 @@ Response: { "prediction": "pants-fire",
     <tr><td>WordPiece / BPE</td><td>Sub-word tokenization schemes used by BERT and RoBERTa respectively.</td></tr>
   </tbody>
 </table>
+
+<h1 id="appH">Appendix H: Application Screenshots</h1>
+
+<p>The trained model is deployed as a live, open-source web application. The
+interface is publicly accessible at
+<strong>https://veracity-bert-liar.vercel.app</strong>, with the inference API
+served separately and its source code available at
+<strong>https://github.com/adityarajmishra/veracity-bert-liar</strong>. The
+screenshots below illustrate the deployed system; because predictions are
+probabilistic, the application presents results as calibrated confidence levels
+rather than definitive verdicts, consistent with the human-in-the-loop framing
+discussed in Section 10.</p>
+
+<figure>
+  <img src="figures/App Images/app_screenshot_01.png" alt="Application screenshot 1" style="max-width:92%;">
+  <figcaption><strong>Figure H1.</strong> Veracity.ai web application — landing view with the statement input panel.</figcaption>
+</figure>
+
+<figure>
+  <img src="figures/App Images/app_screenshot_02.png" alt="Application screenshot 2" style="max-width:92%;">
+  <figcaption><strong>Figure H2.</strong> Statement analysis in progress, showing the detector interface.</figcaption>
+</figure>
+
+<figure>
+  <img src="figures/App Images/app_screenshot_03.png" alt="Application screenshot 3" style="max-width:92%;">
+  <figcaption><strong>Figure H3.</strong> Prediction result — the veracity verdict with a confidence gauge.</figcaption>
+</figure>
+
+<figure>
+  <img src="figures/App Images/app_screenshot_04.png" alt="Application screenshot 4" style="max-width:92%;">
+  <figcaption><strong>Figure H4.</strong> Full six-class probability distribution for an analyzed statement.</figcaption>
+</figure>
+
+<figure>
+  <img src="figures/App Images/app_screenshot_05.png" alt="Application screenshot 5" style="max-width:92%;">
+  <figcaption><strong>Figure H5.</strong> Model performance metrics surfaced in the interface.</figcaption>
+</figure>
+
+<figure>
+  <img src="figures/App Images/app_screenshot_06.png" alt="Application screenshot 6" style="max-width:92%;">
+  <figcaption><strong>Figure H6.</strong> Interactive API reference page for developers consuming the service.</figcaption>
+</figure>
+
+<figure>
+  <img src="figures/App Images/app_screenshot_07.png" alt="Application screenshot 7" style="max-width:92%;">
+  <figcaption><strong>Figure H7.</strong> API endpoint documentation with request and response examples.</figcaption>
+</figure>
 
 </div>
 
